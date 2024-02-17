@@ -1,19 +1,10 @@
-digraph ListaDoblementeEnlazada {
-    // Definición de los nodos y sus atributos
+digraph ListaDoblementeEnlazada { 
     node [shape=record];
-
-    // Definición de los nodos de la lista
     inicio [label="inicio | <siguiente> siguiente"];
     fin [label="fin | <anterior> anterior"];
-
-    // Definición del nodo del elemento
     Nodo [label="<nombre> nombre | <apellido> apellido | <carnet> carnet | <siguiente> siguiente | <anterior> anterior"];
-
-    // Conexiones entre los nodos de la lista
     inicio:siguiente -> Nodo:siguiente [arrowhead=normal, label="Siguiente"];
     Nodo:anterior -> fin:anterior [arrowhead=normal, label="Anterior"];
-
-    // Conexiones entre los nodos internos de la lista
     Nodo:siguiente -> Nodo [constraint=false, arrowhead=normal, dir=both, label="Siguiente"];
     Nodo:anterior -> Nodo [constraint=false, arrowhead=normal, dir=both, label="Anterior"];
 }
