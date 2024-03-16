@@ -1,153 +1,126 @@
 import os
 from graphviz import Digraph
 
-# Obtener la ruta del archivo actual
-current_path = os.path.dirname(os.path.abspath(__file__))
-
-class TreeNode:
-    def __init__(self, data):
-        self.data = data
+class Node:
+    def __init__(self, key):
         self.left = None
         self.right = None
+        self.val = key
 
 class BinarySearchTree:
     def __init__(self):
         self.root = None
-        self.graph = Digraph()
 
-    def insert(self, data):
-        if not self.root:
-            self.root = TreeNode(data)
-        else:
-            self._insert_recursive(self.root, data)
-
-    def _insert_recursive(self, node, data):
-        if data < node.data:
-            if node.left is None:
-                node.left = TreeNode(data)
-            else:
-                self._insert_recursive(node.left, data)
-        elif data > node.data:
-            if node.right is None:
-                node.right = TreeNode(data)
-            else:
-                self._insert_recursive(node.right, data)
-
-    def search(self, data):
-        return self._search_recursive(self.root, data)
-
-    def _search_recursive(self, node, data):
-        if node is None or node.data == data:
-            return node
-        if data < node.data:
-            return self._search_recursive(node.left, data)
-        return self._search_recursive(node.right, data)
-
-    def delete(self, data):
-        self.root = self._delete_recursive(self.root, data)
-
-    def _delete_recursive(self, root, data):
+    def insert(self, root, key):
         if root is None:
-            return root
-        if data < root.data:
-            root.left = self._delete_recursive(root.left, data)
-        elif data > root.data:
-            root.right = self._delete_recursive(root.right, data)
+            return Node(key)
         else:
-            if root.left is None:
-                return root.right
-            elif root.right is None:
-                return root.left
-            temp = self._min_value_node(root.right)
-            root.data = temp.data
-            root.right = self._delete_recursive(root.right, temp.data)
+            if key < root.val:
+                root.left = self.insert(root.left, key)
+            else:
+                root.right = self.insert(root.right, key)
         return root
 
-    def _min_value_node(self, node):
+    def search(self, root, key):
+        if root is None or root.val == key:
+            return root
+        if root.val < key:
+            return self.search(root.right, key)
+        return self.search(root.left, key)
+
+    def minValueNode(self, node):
         current = node
         while current.left is not None:
             current = current.left
         return current
 
-    def load_from_file(self, filename):
-        file_path = os.path.join(current_path, filename)  # Construir la ruta del archivo
-        if not os.path.exists(file_path):
-            print("El archivo no existe.")
-            return
-        with open(file_path, 'r') as file:
-            for line in file:
-                data = int(line.strip())
-                self.insert(data)
+    def deleteNode(self, root, key):
+        if root is None:
+            return root
+        if key < root.val:
+            root.left = self.deleteNode(root.left, key)
+        elif key > root.val:
+            root.right = self.deleteNode(root.right, key)
+        else:
+            if root.left is None:
+                temp = root.right
+                root = None
+                return temp
+            elif root.right is None:
+                temp = root.left
+                root = None
+                return temp
+            temp = self.minValueNode(root.right)
+            root.val = temp.val
+            root.right = self.deleteNode(root.right, temp.val)
+        return root
 
-    def to_binary(self):
-        if not self.root:
-            return
-        self._to_binary_recursive(self.root)
+    def convert_to_binary(self, root):
+        if root is None:
+            return None
+        dot = Digraph()
+        stack = [root]
+        while stack:
+            current = stack.pop()
+            if current:
+                dot.node(str(current.val))
+                if current.left:
+                    dot.node(str(current.left.val))
+                    dot.edge(str(current.val), str(current.left.val))
+                    stack.append(current.left)
+                if current.right:
+                    dot.node(str(current.right.val))
+                    dot.edge(str(current.val), str(current.right.val))
+                    stack.append(current.right)
+        dot.render('binary_tree', format='png', cleanup=True)
+        return 'binary_tree.png'
 
-    def _to_binary_recursive(self, node):
-        if node is None:
-            return
-        self._to_binary_recursive(node.left)
-        self._to_binary_recursive(node.right)
-        if node.left and node.right:
-            node.right = TreeNode(node.left.data)
-            node.left = None
 
-    def generate_graphviz(self):
-        self.graph = Digraph()
-        self._add_nodes_to_graphviz(self.root)
-        self.graph.render('binary_tree', format='png', cleanup=True)
-        print("Se ha generado la representación en Graphviz del árbol.")
-        input("Presiona Enter para continuar...")
+def print_menu():
+    print("1. Insertar nodo")
+    print("2. Buscar nodo")
+    print("3. Eliminar nodo")
+    print("4. Cargar desde archivo")
+    print("5. Convertir a binario")
+    print("6. Salir")
 
-    def _add_nodes_to_graphviz(self, node):
-        if node is None:
-            return
-        self.graph.node(str(node.data))
-        if node.left:
-            self.graph.edge(str(node.data), str(node.left.data))
-            self._add_nodes_to_graphviz(node.left)
-        if node.right:
-            self.graph.edge(str(node.data), str(node.right.data))
-            self._add_nodes_to_graphviz(node.right)
 
-def menu():
-    print("1. Insertar")
-    print("2. Buscar")
-    print("3. Eliminar")
-    print("4. Cargar desde Archivo")
-    print("5. Convertir a binario el árbol")
-    print("6. Generar representación en Graphviz")
-    print("7. Salir")
-
-if __name__ == "__main__":
-    tree = BinarySearchTree()
+def main():
+    bst = BinarySearchTree()
     while True:
-        print("\nÁrbol Binario de Búsqueda")
-        menu()
-        choice = input("Seleccione una opción: ")
-        if choice == "1":
-            data = int(input("Ingrese el número a insertar: "))
-            tree.insert(data)
-        elif choice == "2":
-            data = int(input("Ingrese el número a buscar: "))
-            if tree.search(data):
-                print("El número está en el árbol.")
+        print("\nÁrbol Binario de Búsqueda - Menú:")
+        print_menu()
+        choice = int(input("Seleccione una opción: "))
+        if choice == 1:
+            key = int(input("Ingrese el valor del nodo a insertar: "))
+            bst.root = bst.insert(bst.root, key)
+            print("Nodo insertado exitosamente.")
+        elif choice == 2:
+            key = int(input("Ingrese el valor del nodo a buscar: "))
+            if bst.search(bst.root, key):
+                print("El nodo está presente en el árbol.")
             else:
-                print("El número no está en el árbol.")
-        elif choice == "3":
-            data = int(input("Ingrese el número a eliminar: "))
-            tree.delete(data)
-        elif choice == "4":
-            filename = input("Ingrese el nombre del archivo: ")
-            tree.load_from_file(filename)
-        elif choice == "5":
-            tree.to_binary()
-            print("El árbol se ha convertido a binario.")
-        elif choice == "6":
-            tree.generate_graphviz()
-        elif choice == "7":
-            print("¡Hasta luego!")
+                print("El nodo no está presente en el árbol.")
+        elif choice == 3:
+            key = int(input("Ingrese el valor del nodo a eliminar: "))
+            bst.root = bst.deleteNode(bst.root, key)
+            print("Nodo eliminado exitosamente.")
+        elif choice == 4:
+            filepath = input("Ingrese la ruta completa del archivo (por ejemplo, C:\\Users\\WichoxXGT\\Documents\\datos.txt): ")
+            with open(filepath, 'r') as file:
+                for line in file:
+                    key = int(line.strip())
+                    bst.root = bst.insert(bst.root, key)
+            print("Datos cargados desde el archivo exitosamente.")
+        elif choice == 5:
+            png_path = bst.convert_to_binary(bst.root)
+            print(f"Árbol convertido a binario y la representación visual ha sido guardada en {png_path}.")
+        elif choice == 6:
+            print("Saliendo del programa...")
             break
         else:
-            print("Opción no válida.")
+            print("Opción no válida. Por favor, seleccione una opción válida.")
+
+
+if __name__ == "__main__":
+    main()
